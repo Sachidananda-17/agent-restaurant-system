@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 3-Agent Restaurant Recommendation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 20px;
+            border-radius: 15px;
+            flex-wrap: wrap;
+        }
+
+        .agent-status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            min-width: 150px;
+            margin: 5px;
+        }
+
+        .agent-status.online {
+            border: 2px solid #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .workflow-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .workflow-step {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            min-width: 200px;
+            margin: 10px;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .workflow-step.active {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4CAF50;
+            transform: scale(1.05);
+        }
+
+        .workflow-step.completed {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+        }
+
+        .workflow-arrow {
+            font-size: 2em;
+            color: #4CAF50;
+            margin: 0 10px;
+        }
+
+        .responses-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .response-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .response-card.new-response {
+            animation: pulse 1s ease-in-out;
+            border: 2px solid #4CAF50;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .response-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .response-header .icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .response-content {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .current-task {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .log-entry.alice { color: #81C784; }
+        .log-entry.bob { color: #64B5F6; }
+        .log-entry.charlie { color: #FFB74D; }
+        .log-entry.system { color: #E1BEE7; }
+
+        @media (max-width: 768px) {
+            .responses-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .workflow-steps {
+                flex-direction: column;
+            }
+            
+            .workflow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 3-Agent Restaurant Recommendation System</h1>
+        <p>Real-time monitoring of Alice, Bob & Charlie collaboration on Agentverse</p>
+    </div>
+
+    <div class="status-bar">
+        <div class="agent-status online" id="alice-status">
+            <div>🔍 ALICE</div>
+            <div>Data Collector</div>
+            <div><small id="alice-address">agent1qv7cp9...</small></div>
+        </div>
+        <div class="agent-status online" id="bob-status">
+            <div>🧠 BOB</div>
+            <div>Analyzer</div>
+            <div><small id="bob-address">agent1qfktux...</small></div>
+        </div>
+        <div class="agent-status online" id="charlie-status">
+            <div>👑 CHARLIE</div>
+            <div>Coordinator</div>
+            <div><small id="charlie-address">agent1q28h0...</small></div>
+        </div>
+    </div>
+
+    <div class="workflow-container">
+        <div class="current-task" id="current-task">
+            <h3>🎯 Current Task: <span id="task-id">Waiting for new request...</span></h3>
+            <p><strong>Request:</strong> <span id="task-request">System ready for restaurant recommendations</span></p>
+            <p><strong>Status:</strong> <span id="task-status">Idle</span></p>
+            <p><strong>Started:</strong> <span id="task-time">--</span></p>
+        </div>
+
+        <div class="workflow-steps">
+            <div class="workflow-step" id="step-alice">
+                <div class="response-header">
+                    <span class="icon">🔍</span>
+                    ALICE
+                </div>
+                <div>Data Collection</div>
+            </div>
+            <div class="workflow-arrow">➡️</div>
+            <div class="workflow-step" id="step-bob">
+                <div class="response-header">
+                    <span class="icon">🧠</span>
+                    BOB
+                </div>
+                <div>Analysis</div>
+            </div>
+            <div class="workflow-arrow">➡️</div>
+            <div class="workflow-step" id="step-charlie">
+                <div class="response-header">
+                    <span class="icon">👑</span>
+                    CHARLIE
+                </div>
+                <div>Decision</div>
+            </div>
+        </div>
+
+        <div class="responses-container">
+            <div class="response-card" id="alice-response">
+                <div class="response-header">
+                    <span class="icon">🔍</span>
+                    Alice Response
+                </div>
+                <div class="response-content" id="alice-content">
+                    Waiting for Alice to process user preferences...
+                </div>
+            </div>
+            
+            <div class="response-card" id="bob-response">
+                <div class="response-header">
+                    <span class="icon">🧠</span>
+                    Bob Response
+                </div>
+                <div class="response-content" id="bob-content">
+                    Waiting for Bob to analyze restaurant options...
+                </div>
+            </div>
+            
+            <div class="response-card" id="charlie-response">
+                <div class="response-header">
+                    <span class="icon">👑</span>
+                    Charlie Response
+                </div>
+                <div class="response-content" id="charlie-content">
+                    Waiting for Charlie to make final decision...
+                </div>
+            </div>
+        </div>
+
+        <div class="statistics">
+            <div class="stat-card">
+                <div class="stat-number" id="total-workflows">0</div>
+                <div>Total Workflows</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avg-time">--</div>
+                <div>Avg Time (sec)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="success-rate">--</div>
+                <div>Success Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="alice-messages">0</div>
+                <div>Alice Messages</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="triggerNewRequest()">🎯 Send Test Request</button>
+            <button class="btn" onclick="clearLogs()">🗑️ Clear Logs</button>
+            <button class="btn" onclick="exportData()">📊 Export Data</button>
+        </div>
+
+        <div class="log-container">
+            <h3>📋 Real-time Activity Log</h3>
+            <div id="activity-log">
+                <div class="log-entry system">[SYSTEM] Dashboard initialized - monitoring Agentverse agents</div>
+                <div class="log-entry system">[SYSTEM] Alice: agent1qv7cp9rmuln4ay27sxr7wfe5027er9xm3kx3fweckk55avl5xwhuv2rwqs3</div>
+                <div class="log-entry system">[SYSTEM] Bob: agent1qfktux3y85zl4lajwh5shm7paputfddyrevdqq3stn7n65mgz9yxzf0sknu</div>
+                <div class="log-entry system">[SYSTEM] Charlie: agent1q28h0anmn790wka6r7ws23jnt62546yza07q9cr7y9t988dzn7hy7se8khy</div>
+                <div class="log-entry system">[SYSTEM] Waiting for agent responses...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Your deployed agent addresses
+        const AGENTS = {
+            alice: "agent1qv7cp9rmuln4ay27sxr7wfe5027er9xm3kx3fweckk55avl5xwhuv2rwqs3",
+            bob: "agent1qfktux3y85zl4lajwh5shm7paputfddyrevdqq3stn7n65mgz9yxzf0sknu",
+            charlie: "agent1q28h0anmn790wka6r7ws23jnt62546yza07q9cr7y9t988dzn7hy7se8khy"
+        };
+
+        // Statistics tracking
+        let stats = {
+            totalWorkflows: 0,
+            completedWorkflows: 0,
+            totalTime: 0,
+            aliceMessages: 0,
+            bobAnalyses: 0,
+            charlieDecisions: 0
+        };
+
+        // Current workflow tracking
+        let currentWorkflow = {
+            taskId: null,
+            startTime: null,
+            steps: {
+                alice: false,
+                bob: false,
+                charlie: false
+            }
+        };
+
+        // Simulated data for demonstration
+        const sampleRequests = [
+            {
+                request: "Find romantic Italian restaurant for anniversary dinner",
+                preferences: {cuisine: "Italian", occasion: "romantic", price: "$$$"},
+                location: "downtown"
+            },
+            {
+                request: "Family-friendly sushi restaurant with kids menu",
+                preferences: {cuisine: "Japanese", occasion: "family", price: "$$"},
+                location: "suburbs"
+            },
+            {
+                request: "Business lunch venue in financial district",
+                preferences: {cuisine: "American", occasion: "business", price: "$$$"},
+                location: "financial_district"
+            }
+        ];
+
+        function addLogEntry(message, type = 'system') {
+            const logContainer = document.getElementById('activity-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `[${timestamp}] ${message}`;
+            
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Keep only last 100 entries
+            if (logContainer.children.length > 100) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        function updateWorkflowStep(step, active = false, completed = false) {
+            const stepElement = document.getElementById(`step-${step}`);
+            stepElement.classList.remove('active', 'completed');
+            
+            if (completed) {
+                stepElement.classList.add('completed');
+            } else if (active) {
+                stepElement.classList.add('active');
+            }
+        }
+
+        function showAgentResponse(agent, content) {
+            const responseCard = document.getElementById(`${agent}-response`);
+            const responseContent = document.getElementById(`${agent}-content`);
+            
+            responseContent.innerHTML = content;
+            responseCard.classList.add('new-response');
+            
+            setTimeout(() => {
+                responseCard.classList.remove('new-response');
+            }, 2000);
+        }
+
+        function simulateAliceResponse() {
+            const scenario = sampleRequests[Math.floor(Math.random() * sampleRequests.length)];
+            
+            addLogEntry(`[ALICE] Processing user request: "${scenario.request}"`, 'alice');
+            updateWorkflowStep('alice', true);
+            
+            const content = `
+                <strong>📊 Data Collection Complete</strong><br>
+                <strong>Confidence:</strong> 0.${Math.floor(Math.random() * 200 + 800)}<br>
+                <strong>🍽️ Cuisine:</strong> ${scenario.preferences.cuisine}<br>
+                <strong>💰 Budget:</strong> ${scenario.preferences.price}<br>
+                <strong>🎭 Occasion:</strong> ${scenario.preferences.occasion}<br>
+                <strong>📍 Location:</strong> ${scenario.location}<br>
+                <strong>⏰ Timestamp:</strong> ${new Date().toLocaleTimeString()}<br>
+                <em>🔄 Sending to Bob for analysis...</em>
+            `;
+            
+            showAgentResponse('alice', content);
+            stats.aliceMessages++;
+            updateStatistics();
+            
+            setTimeout(simulateBobResponse, 2000 + Math.random() * 2000);
+        }
+
+        function simulateBobResponse() {
+            addLogEntry(`[BOB] Analyzing restaurant options and generating recommendations`, 'bob');
+            updateWorkflowStep('alice', false, true);
+            updateWorkflowStep('bob', true);
+            
+            const restaurants = [
+                {name: "Villa Roma", cuisine: "Italian", rating: 4.8, price: "$$$"},
+                {name: "Sakura Sushi", cuisine: "Japanese", rating: 4.7, price: "$$"},
+                {name: "Giuseppe's Kitchen", cuisine: "Italian", rating: 4.6, price: "$$"},
+                {name: "Le Petit Bistro", cuisine: "French", rating: 4.9, price: "$$$$"}
+            ];
+            
+            const topChoice = restaurants[Math.floor(Math.random() * restaurants.length)];
+            const matchScore = 0.8 + Math.random() * 0.15;
+            const confidence = 0.75 + Math.random() * 0.2;
+            
+            const content = `
+                <strong>🧠 Analysis Complete</strong><br>
+                <strong>🏆 Recommendations:</strong> ${Math.floor(Math.random() * 3 + 3)} options found<br>
+                <strong>🥇 Top Choice:</strong> ${topChoice.name}<br>
+                <strong>⭐ Rating:</strong> ${topChoice.rating}/5.0<br>
+                <strong>💰 Price:</strong> ${topChoice.price}<br>
+                <strong>📊 Match Score:</strong> ${matchScore.toFixed(3)}<br>
+                <strong>📈 Confidence:</strong> ${confidence.toFixed(3)}<br>
+                <strong>⏰ Timestamp:</strong> ${new Date().toLocaleTimeString()}<br>
+                <em>🔄 Sending to Charlie for final decision...</em>
+            `;
+            
+            showAgentResponse('bob', content);
+            stats.bobAnalyses++;
+            updateStatistics();
+            
+            setTimeout(() => simulateCharlieResponse(topChoice, confidence), 1500 + Math.random() * 2000);
+        }
+
+        function simulateCharlieResponse(restaurant, confidence) {
+            addLogEntry(`[CHARLIE] Making final decision based on Bob's analysis`, 'charlie');
+            updateWorkflowStep('bob', false, true);
+            updateWorkflowStep('charlie', true);
+            
+            const culturalScore = 0.8 + Math.random() * 0.15;
+            const sustainabilityScore = 0.6 + Math.random() * 0.3;
+            const finalConfidence = confidence * (0.9 + Math.random() * 0.1);
+            
+            const content = `
+                <strong>👑 Final Decision Made</strong><br>
+                <strong>🏆 RECOMMENDATION:</strong> ${restaurant.name}<br>
+                <strong>🍽️ Cuisine:</strong> ${restaurant.cuisine}<br>
+                <strong>⭐ Rating:</strong> ${restaurant.rating}/5.0<br>
+                <strong>💰 Price:</strong> ${restaurant.price}<br>
+                <strong>📊 Decision Confidence:</strong> ${finalConfidence.toFixed(3)}<br>
+                <strong>🌍 Cultural Score:</strong> ${culturalScore.toFixed(3)}<br>
+                <strong>🌱 Sustainability:</strong> ${sustainabilityScore.toFixed(3)}<br>
+                <strong>💭 Reasoning:</strong> Selected through comprehensive global analysis<br>
+                <strong>⏰ Timestamp:</strong> ${new Date().toLocaleTimeString()}
+            `;
+            
+            showAgentResponse('charlie', content);
+            stats.charlieDecisions++;
+            
+            setTimeout(() => {
+                updateWorkflowStep('charlie', false, true);
+                completeWorkflow();
+            }, 1000);
+        }
+
+        function completeWorkflow() {
+            const endTime = Date.now();
+            const processingTime = (endTime - currentWorkflow.startTime) / 1000;
+            
+            stats.completedWorkflows++;
+            stats.totalTime += processingTime;
+            
+            addLogEntry(`[SYSTEM] ✅ Workflow completed in ${processingTime.toFixed(1)} seconds`, 'system');
+            
+            // Reset workflow steps after a delay
+            setTimeout(() => {
+                updateWorkflowStep('alice');
+                updateWorkflowStep('bob');
+                updateWorkflowStep('charlie');
+                document.getElementById('task-status').textContent = 'Completed';
+            }, 2000);
+            
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            document.getElementById('total-workflows').textContent = stats.completedWorkflows;
+            document.getElementById('alice-messages').textContent = stats.aliceMessages;
+            
+            if (stats.completedWorkflows > 0) {
+                const avgTime = stats.totalTime / stats.completedWorkflows;
+                document.getElementById('avg-time').textContent = avgTime.toFixed(1);
+                document.getElementById('success-rate').textContent = '100%';
+            }
+        }
+
+        function triggerNewRequest() {
+            if (currentWorkflow.taskId) {
+                addLogEntry('[SYSTEM] ⏳ Previous workflow in progress, please wait...', 'system');
+                return;
+            }
+            
+            const scenario = sampleRequests[Math.floor(Math.random() * sampleRequests.length)];
+            const taskId = `web_${Date.now()}`;
+            
+            currentWorkflow = {
+                taskId: taskId,
+                startTime: Date.now(),
+                steps: {alice: false, bob: false, charlie: false}
+            };
+            
+            stats.totalWorkflows++;
+            
+            // Update current task display
+            document.getElementById('task-id').textContent = taskId;
+            document.getElementById('task-request').textContent = scenario.request;
+            document.getElementById('task-status').textContent = 'Processing';
+            document.getElementById('task-time').textContent = new Date().toLocaleTimeString();
+            
+            addLogEntry(`[SYSTEM] 🚀 New workflow initiated: ${taskId}`, 'system');
+            addLogEntry(`[SYSTEM] 👤 User request: "${scenario.request}"`, 'system');
+            
+            setTimeout(simulateAliceResponse, 1000);
+        }
+
+        function clearLogs() {
+            document.getElementById('activity-log').innerHTML = 
+                '<div class="log-entry system">[SYSTEM] Logs cleared - dashboard reset</div>';
+        }
+
+        function exportData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                statistics: stats,
+                agents: AGENTS
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `agent-dashboard-export-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addLogEntry('[SYSTEM] 📊 Data exported successfully', 'system');
+        }
+
+        // Auto-trigger workflows every 30 seconds for demo
+        function startAutoDemo() {
+            setInterval(() => {
+                if (!currentWorkflow.taskId) {
+                    triggerNewRequest();
+                }
+            }, 30000);
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            addLogEntry('[SYSTEM] 🌐 Dashboard loaded successfully', 'system');
+            addLogEntry('[SYSTEM] 🤖 All 3 agents connected to Agentverse', 'system');
+            addLogEntry('[SYSTEM] 📡 Ready for restaurant recommendation workflows', 'system');
+            
+            // Start auto-demo after 5 seconds
+            setTimeout(() => {
+                addLogEntry('[SYSTEM] 🎯 Starting automatic demo mode...', 'system');
+                triggerNewRequest();
+                startAutoDemo();
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

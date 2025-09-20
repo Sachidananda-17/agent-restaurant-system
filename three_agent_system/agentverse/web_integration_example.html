@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Recommendation - Powered by Your Agentverse Agents</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .agents-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ AI Restaurant Recommendations</h1>
+        <p style="text-align: center; margin-bottom: 30px;">
+            Powered by your deployed Agentverse AI agents
+        </p>
+
+        <div class="agents-info">
+            <h3>🤖 Your AI Agent Team:</h3>
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                <div>🔍 <strong>Alice:</strong> Data Collector</div>
+                <div>🧠 <strong>Bob:</strong> Analyzer</div>
+                <div>👑 <strong>Charlie:</strong> Decision Maker</div>
+            </div>
+            <small>Status: <span id="agentStatus">Checking connection...</span></small>
+        </div>
+
+        <form id="recommendationForm">
+            <div class="form-group">
+                <label for="request">What kind of restaurant are you looking for?</label>
+                <textarea 
+                    id="request" 
+                    placeholder="e.g., Romantic Italian restaurant for anniversary dinner"
+                    rows="2"
+                    required>
+                </textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="cuisine">Preferred Cuisine:</label>
+                <select id="cuisine">
+                    <option value="any">Any Cuisine</option>
+                    <option value="Italian">Italian</option>
+                    <option value="French">French</option>
+                    <option value="Japanese">Japanese</option>
+                    <option value="Chinese">Chinese</option>
+                    <option value="Mexican">Mexican</option>
+                    <option value="Indian">Indian</option>
+                    <option value="American">American</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="occasion">Occasion:</label>
+                <select id="occasion">
+                    <option value="casual">Casual Dining</option>
+                    <option value="romantic">Romantic</option>
+                    <option value="business">Business</option>
+                    <option value="family">Family</option>
+                    <option value="celebration">Celebration</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="budget">Budget:</label>
+                <select id="budget">
+                    <option value="$">$ - Budget Friendly</option>
+                    <option value="$$">$$ - Moderate</option>
+                    <option value="$$$">$$$ - Upscale</option>
+                    <option value="$$$$">$$$$ - Fine Dining</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location/Area:</label>
+                <input 
+                    type="text" 
+                    id="location" 
+                    placeholder="e.g., Downtown, Financial District"
+                    value="Downtown"
+                    required>
+            </div>
+
+            <button type="submit">
+                🤖 Get AI Recommendation
+            </button>
+        </form>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Your AI agents are collaborating...</p>
+            <small>Alice is analyzing your preferences, Bob is finding matches, Charlie is making the final decision</small>
+        </div>
+
+        <div id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Configuration - Replace with your actual deployed agent addresses
+        const AGENT_CONFIG = {
+            alice: "agent1qf...0z4m09", // Your deployed Alice address
+            bob: "",                    // Your deployed Bob address (after deployment)
+            charlie: "",                // Your deployed Charlie address (after deployment)
+            apiEndpoint: "https://agentverse.ai/api/v1/agents/message" // Agentverse API
+        };
+
+        // Check agent status on page load
+        window.onload = function() {
+            checkAgentStatus();
+        };
+
+        function checkAgentStatus() {
+            const statusElement = document.getElementById('agentStatus');
+            
+            if (AGENT_CONFIG.alice && AGENT_CONFIG.bob && AGENT_CONFIG.charlie) {
+                statusElement.textContent = "🟢 All agents deployed and ready";
+                statusElement.style.color = "#4CAF50";
+            } else if (AGENT_CONFIG.alice) {
+                statusElement.textContent = "🟡 Alice deployed, Bob & Charlie needed";
+                statusElement.style.color = "#FFC107";
+            } else {
+                statusElement.textContent = "🔴 No agents deployed yet";
+                statusElement.style.color = "#F44336";
+            }
+        }
+
+        document.getElementById('recommendationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = {
+                request: document.getElementById('request').value,
+                cuisine: document.getElementById('cuisine').value,
+                occasion: document.getElementById('occasion').value,
+                budget: document.getElementById('budget').value,
+                location: document.getElementById('location').value
+            };
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                // Simulate sending to your deployed agents
+                // In real implementation, this would call Agentverse API
+                const recommendation = await getAIRecommendation(formData);
+                
+                displayResult(recommendation);
+                
+            } catch (error) {
+                displayError(error.message);
+            }
+        });
+
+        async function getAIRecommendation(formData) {
+            // Simulate the full agent collaboration process
+            
+            // Step 1: Alice processes the request (simulate 2-3 seconds)
+            await sleep(2500);
+            
+            // Step 2: Bob analyzes options (simulate 3-4 seconds) 
+            await sleep(3500);
+            
+            // Step 3: Charlie makes final decision (simulate 1-2 seconds)
+            await sleep(1500);
+
+            // In real implementation, this would be:
+            /*
+            const response = await fetch(AGENT_CONFIG.apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer YOUR_API_KEY'
+                },
+                body: JSON.stringify({
+                    recipient: AGENT_CONFIG.alice,
+                    message: {
+                        task_id: `web_${Date.now()}`,
+                        user_request: formData.request,
+                        preferences: {
+                            cuisine: formData.cuisine,
+                            occasion: formData.occasion,
+                            price_range: formData.budget
+                        },
+                        location: formData.location,
+                        timestamp: new Date().toISOString()
+                    }
+                })
+            });
+            
+            return await response.json();
+            */
+
+            // Simulated response from your deployed agents
+            const recommendations = generateSimulatedResponse(formData);
+            return recommendations;
+        }
+
+        function generateSimulatedResponse(formData) {
+            const restaurants = {
+                Italian: [
+                    { name: "Villa Roma", rating: 4.8, price: "$$$", location: "Historic District" },
+                    { name: "Giuseppe's Kitchen", rating: 4.6, price: "$$", location: "Little Italy" }
+                ],
+                French: [
+                    { name: "Le Petit Bistro", rating: 4.9, price: "$$$$", location: "Arts Quarter" },
+                    { name: "Café Provence", rating: 4.5, price: "$$$", location: "Downtown" }
+                ],
+                Japanese: [
+                    { name: "Sakura Sushi", rating: 4.7, price: "$$$", location: "Financial District" },
+                    { name: "Ramen House", rating: 4.4, price: "$$", location: "University Area" }
+                ]
+            };
+
+            const cuisine = formData.cuisine === 'any' ? 'Italian' : formData.cuisine;
+            const options = restaurants[cuisine] || restaurants.Italian;
+            const choice = options[0];
+
+            return {
+                task_id: `web_${Date.now()}`,
+                final_choice: {
+                    name: choice.name,
+                    cuisine: cuisine,
+                    rating: choice.rating,
+                    price: choice.price,
+                    location: choice.location,
+                    cultural_appropriateness: 0.92,
+                    sustainability_rating: 0.78
+                },
+                decision_reasoning: `Selected ${choice.name} based on your ${formData.occasion} dining preference and ${formData.budget} budget. This restaurant excels in ${cuisine} cuisine with exceptional ratings and perfect location match.`,
+                confidence_score: 0.89,
+                all_participants: ["Alice", "Bob", "Charlie"],
+                analysis_time: "7.2 seconds",
+                global_collaboration: true
+            };
+        }
+
+        function displayResult(recommendation) {
+            document.getElementById('loading').style.display = 'none';
+            
+            const resultDiv = document.getElementById('result');
+            const choice = recommendation.final_choice;
+            
+            resultDiv.innerHTML = `
+                <h3>🎉 AI Recommendation Result</h3>
+                <div style="border-left: 5px solid #4CAF50; padding-left: 15px; margin: 15px 0;">
+                    <h2 style="margin-top: 0; color: #4CAF50;">${choice.name}</h2>
+                    <p><strong>🍽️ Cuisine:</strong> ${choice.cuisine}</p>
+                    <p><strong>⭐ Rating:</strong> ${choice.rating}/5.0</p>
+                    <p><strong>💰 Price:</strong> ${choice.price}</p>
+                    <p><strong>📍 Location:</strong> ${choice.location}</p>
+                </div>
+                
+                <h4>🤖 AI Analysis:</h4>
+                <p>${recommendation.decision_reasoning}</p>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 20px; flex-wrap: wrap;">
+                    <div><strong>📊 Confidence:</strong> ${(recommendation.confidence_score * 100).toFixed(1)}%</div>
+                    <div><strong>🌍 Cultural Score:</strong> ${(choice.cultural_appropriateness * 100).toFixed(1)}%</div>
+                    <div><strong>🌱 Sustainability:</strong> ${(choice.sustainability_rating * 100).toFixed(1)}%</div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; font-size: 12px;">
+                    <strong>🔬 AI Collaboration Process:</strong><br>
+                    ✅ Alice analyzed your preferences<br>
+                    ✅ Bob performed multi-criteria analysis<br>
+                    ✅ Charlie made the final decision<br>
+                    ⏱️ Total processing time: ${recommendation.analysis_time}
+                </div>
+            `;
+            
+            resultDiv.style.display = 'block';
+        }
+
+        function displayError(message) {
+            document.getElementById('loading').style.display = 'none';
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div style="border-left: 5px solid #F44336; padding-left: 15px;">
+                    <h3 style="color: #F44336;">❌ Error</h3>
+                    <p>${message}</p>
+                    <p><small>Please make sure your agents are deployed and running on Agentverse.</small></p>
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
