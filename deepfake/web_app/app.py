@@ -1,0 +1,219 @@
+"""
+Web Application for Deepfake Detection System
+"""
+
+from flask import Flask, render_template, request, jsonify, send_file
+from flask_socketio import SocketIO, emit
+import os
+from datetime import datetime
+import time
+from pathlib import Path
+import threading
+import logging
+from typing import Dict, Any
+import json
+
+from config import WEB_CONFIG
+from agents.coordinator_agent import CoordinatorAgent
+from agents.image_processor_agent import ImageProcessorAgent
+from agents.forensic_analyzer_agent import ForensicAnalyzerAgent
+from agents.report_generator_agent import ReportGeneratorAgent
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize Flask app
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(24)
+app.config['MAX_CONTENT_LENGTH'] = WEB_CONFIG['max_file_size']
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Create required directories
+UPLOAD_DIR = Path("uploads")
+REPORT_DIR = Path("reports")
+for directory in [UPLOAD_DIR, REPORT_DIR]:
+    directory.mkdir(exist_ok=True)
+
+# Initialize agents
+coordinator = CoordinatorAgent(
+    name="coordinator_agent",
+    seed="coordinator_seed_2024",
+    port=8000
+)
+
+image_processor = ImageProcessorAgent(
+    name="image_processor_agent",
+    seed="image_processor_seed_2024",
+    port=8001
+)
+
+forensic_analyzer = ForensicAnalyzerAgent(
+    name="forensic_analyzer_agent",
+    seed="forensic_analyzer_seed_2024",
+    port=8002
+)
+
+report_generator = ReportGeneratorAgent(
+    name="report_generator_agent",
+    seed="report_generator_seed_2024",
+    port=8003
+)
+
+# Global state
+analysis_tasks = {}
+
+def allowed_file(filename: str) -> bool:
+    """Check if file extension is allowed"""
+    return Path(filename).suffix.lower() in WEB_CONFIG['allowed_extensions']
+
+@app.route('/')
+def index():
+    """Render main page"""
+    return render_template('index.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    """Handle file upload"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({
+                'error': f'Invalid file type. Allowed types: {", ".join(WEB_CONFIG["allowed_extensions"])}'
+            }), 400
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{timestamp}_{file.filename}"
+        filepath = UPLOAD_DIR / filename
+        
+        # Save file
+        file.save(str(filepath))
+        
+        # Generate task ID
+        task_id = f"task_{timestamp}"
+        
+        # Initialize task tracking
+        analysis_tasks[task_id] = {
+            'status': 'uploaded',
+            'filename': filename,
+            'filepath': str(filepath),
+            'timestamp': datetime.now().isoformat(),
+            'progress': 0
+        }
+        
+        # Start analysis
+        threading.Thread(
+            target=start_analysis,
+            args=(task_id, str(filepath)),
+            daemon=True
+        ).start()
+        
+        return jsonify({
+            'success': True,
+            'task_id': task_id,
+            'message': 'File uploaded successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Upload error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/status/<task_id>')
+def get_status(task_id: str):
+    """Get task status"""
+    if task_id not in analysis_tasks:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    return jsonify(analysis_tasks[task_id])
+
+@app.route('/report/<task_id>')
+def get_report(task_id: str):
+    """Download analysis report"""
+    if task_id not in analysis_tasks:
+        return jsonify({'error': 'Task not found'}), 404
+    
+    task = analysis_tasks[task_id]
+    if task['status'] != 'completed':
+        return jsonify({'error': 'Report not ready'}), 400
+    
+    report_path = task.get('report_path')
+    if not report_path or not Path(report_path).exists():
+        return jsonify({'error': 'Report file not found'}), 404
+    
+    return send_file(
+        report_path,
+        as_attachment=True,
+        download_name=f"deepfake_analysis_{task_id}.pdf"
+    )
+
+def start_analysis(task_id: str, filepath: str):
+    """Start the analysis workflow"""
+    try:
+        # Update task status
+        analysis_tasks[task_id]['status'] = 'processing'
+        emit_status_update(task_id)
+        
+        # Start coordinator agent
+        coordinator.agent.run()
+        
+        # Start analysis agents
+        image_processor.agent.run()
+        forensic_analyzer.agent.run()
+        report_generator.agent.run()
+        
+        # Monitor progress
+        while analysis_tasks[task_id]['status'] != 'completed':
+            time.sleep(1)
+            # Update progress based on completed stages
+            completed = sum(1 for stage in analysis_tasks[task_id].get('stages', {}).values() if stage)
+            total = 4  # Total number of stages
+            analysis_tasks[task_id]['progress'] = (completed / total) * 100
+            emit_status_update(task_id)
+        
+    except Exception as e:
+        logger.error(f"Analysis error: {str(e)}")
+        analysis_tasks[task_id]['status'] = 'error'
+        analysis_tasks[task_id]['error'] = str(e)
+        emit_status_update(task_id)
+
+def emit_status_update(task_id: str):
+    """Emit status update through WebSocket"""
+    socketio.emit(
+        'status_update',
+        {
+            'task_id': task_id,
+            'data': analysis_tasks[task_id]
+        }
+    )
+
+@socketio.on('connect')
+def handle_connect():
+    """Handle client connection"""
+    emit('connected', {'data': 'Connected to Deepfake Detection System'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Handle client disconnection"""
+    logger.info("Client disconnected")
+
+if __name__ == '__main__':
+    print("🔍 Starting Deepfake Detection System")
+    print("=" * 50)
+    print("📊 Web interface available at: http://localhost:5000")
+    print("🛑 Press Ctrl+C to stop")
+    print()
+    
+    socketio.run(
+        app,
+        host=WEB_CONFIG['host'],
+        port=WEB_CONFIG['port'],
+        debug=WEB_CONFIG['debug'],
+        allow_unsafe_werkzeug=True
+    )
