@@ -23,30 +23,30 @@ class DeepfakeReport(FPDF):
     def __init__(self):
         super().__init__()
         self.set_auto_page_break(auto=True, margin=15)
-        self.add_font('DejaVu', '', 'fonts/DejaVuSansCondensed.ttf', uni=True)
-        self.add_font('DejaVu', 'B', 'fonts/DejaVuSansCondensed-Bold.ttf', uni=True)
+        # Use built-in Helvetica font instead of DejaVu
+        self.set_font('Helvetica', '', 12)
         
     def header(self):
         """Add report header"""
-        self.set_font('DejaVu', 'B', 15)
+        self.set_font('Helvetica', 'B', 15)
         self.cell(0, 10, 'Deepfake Analysis Report', 0, 1, 'C')
         self.ln(10)
         
     def footer(self):
         """Add report footer"""
         self.set_y(-15)
-        self.set_font('DejaVu', '', 8)
+        self.set_font('Helvetica', '', 8)
         self.cell(0, 10, f'Page {self.page_no()}/{{nb}}', 0, 0, 'C')
         
     def chapter_title(self, title: str):
         """Add chapter title"""
-        self.set_font('DejaVu', 'B', 12)
+        self.set_font('Helvetica', 'B', 12)
         self.cell(0, 10, title, 0, 1, 'L')
         self.ln(5)
         
     def chapter_body(self, text: str):
         """Add chapter body text"""
-        self.set_font('DejaVu', '', 11)
+        self.set_font('Helvetica', '', 11)
         self.multi_cell(0, 10, text)
         self.ln()
         
@@ -55,7 +55,7 @@ class DeepfakeReport(FPDF):
         if Path(image_path).exists():
             self.image(image_path, x=10, w=190)
             if caption:
-                self.set_font('DejaVu', '', 10)
+                self.set_font('Helvetica', '', 10)
                 self.cell(0, 10, caption, 0, 1, 'C')
                 self.ln(5)
 
