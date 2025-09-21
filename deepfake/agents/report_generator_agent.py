@@ -182,13 +182,24 @@ class ReportGeneratorAgent(BaseAgent):
         pdf.add_page()
         pdf.chapter_title('Executive Summary')
         
-        # Calculate overall verdict
+        # Calculate overall verdict with weighted scores
         deepfake_score = analysis_result["confidence_score"]
-        forensic_score = forensic_result["forensic_score"]
-        overall_score = (deepfake_score + forensic_score) / 2
+        ela_score = forensic_result["ela_analysis"]["score"]
+        compression_score = max(0, 1 + forensic_result["compression_analysis"]["score"])  # Normalize negative scores
+        noise_score = max(0, forensic_result["noise_analysis"]["score"])
         
-        verdict = "LIKELY FAKE" if overall_score > 0.5 else "LIKELY GENUINE"
-        confidence = f"{overall_score * 100:.1f}%"
+        # Weight the scores (deep learning model has highest weight)
+        weighted_score = (
+            0.4 * deepfake_score +  # Deep learning model
+            0.3 * ela_score +       # Error Level Analysis
+            0.2 * compression_score + # Compression analysis
+            0.1 * noise_score        # Noise analysis
+        )
+        
+        # Final verdict based on weighted score and model prediction
+        is_fake = weighted_score > 0.5 or analysis_result["prediction"].upper() == "FAKE"
+        verdict = "LIKELY FAKE" if is_fake else "LIKELY GENUINE"
+        confidence = f"{weighted_score * 100:.1f}%"
         
         summary_text = (
             f"Analysis Verdict: {verdict}\n"
@@ -383,16 +394,30 @@ class ReportGeneratorAgent(BaseAgent):
         forensic_result: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate a summary of the report findings"""
-        overall_score = (
-            analysis_result["confidence_score"] + 
-            forensic_result["forensic_score"]
-        ) / 2
+        # Calculate weighted scores
+        deepfake_score = analysis_result["confidence_score"]
+        ela_score = forensic_result["ela_analysis"]["score"]
+        compression_score = max(0, 1 + forensic_result["compression_analysis"]["score"])
+        noise_score = max(0, forensic_result["noise_analysis"]["score"])
+        
+        # Weight the scores
+        weighted_score = (
+            0.4 * deepfake_score +    # Deep learning model
+            0.3 * ela_score +         # Error Level Analysis
+            0.2 * compression_score + # Compression analysis
+            0.1 * noise_score        # Noise analysis
+        )
+        
+        # Final verdict based on weighted score and model prediction
+        is_fake = weighted_score > 0.5 or analysis_result["prediction"].upper() == "FAKE"
         
         return {
-            "verdict": "LIKELY FAKE" if overall_score > 0.5 else "LIKELY GENUINE",
-            "confidence": overall_score,
-            "deepfake_score": analysis_result["confidence_score"],
-            "forensic_score": forensic_result["forensic_score"],
+            "verdict": "LIKELY FAKE" if is_fake else "LIKELY GENUINE",
+            "confidence": weighted_score,
+            "deepfake_score": deepfake_score,
+            "ela_score": ela_score,
+            "compression_score": compression_score,
+            "noise_score": noise_score,
             "num_anomalies": sum(
                 len(anomalies) 
                 for anomalies in forensic_result["anomalies"].values()
