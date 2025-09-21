@@ -16,6 +16,11 @@ setup(
         'gdown==4.7.1',
         'exifread==3.0.0',
         'imagehash==4.3.1',
-        'matplotlib'
+        'matplotlib',
+        'flask',
+        'flask-socketio',
+        'python-socketio',
+        'python-engineio',
+        'eventlet'
     ]
 )
