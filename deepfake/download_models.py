@@ -20,49 +20,17 @@ def download_face_cascade():
         print("Face detection model downloaded successfully!")
 
 def download_deepfake_model():
-    """Download the pre-trained deepfake detection model"""
+    """Initialize the deepfake detection model"""
     model_path = Path("models/deepfake_detection.pth")
     weights_path = Path("models/xception_weights.pth")
     
-    # Hugging Face model repository URLs (more reliable)
-    weights_url = "https://huggingface.co/deepfake-detection/xception-pretrained/resolve/main/xception_weights.pth"
-    model_url = "https://huggingface.co/deepfake-detection/xception-pretrained/resolve/main/deepfake_detection.pth"
+    print("\nInitializing deepfake detection models...")
     
-    try:
-        if not weights_path.exists():
-            print("\nDownloading Xception weights...")
-            urllib.request.urlretrieve(weights_url, weights_path)
-            print("Xception weights downloaded successfully!")
-        else:
-            print("\nXception weights already exist. Skipping download.")
-            
-        if not model_path.exists():
-            print("\nDownloading deepfake detection model...")
-            urllib.request.urlretrieve(model_url, model_path)
-            print("Deepfake detection model downloaded successfully!")
-        else:
-            print("\nDeepfake detection model already exists. Skipping download.")
-            
-    except Exception as e:
-        print(f"\nError downloading models: {e}")
-        print("Creating initial models...")
-        
-        # Create initial models if download fails
-        create_and_save_initial_model()
-        
-        if not weights_path.exists():
-            # Create initial weights if needed
-            torch.save(model.state_dict(), weights_path)
-            print("Created initial weights file.")
-
-def create_and_save_initial_model():
-    """Create and save initial model if download fails"""
+    # Create the initial model
     from agents.image_processor_agent import DeepfakeDetectionModel
-    
-    print("Creating initial deepfake detection model...")
     model = DeepfakeDetectionModel()
     
-    # Initialize weights
+    # Initialize weights with Xavier initialization
     def init_weights(m):
         if isinstance(m, (nn.Conv2d, nn.Linear)):
             nn.init.xavier_uniform_(m.weight)
@@ -71,32 +39,33 @@ def create_and_save_initial_model():
     
     model.apply(init_weights)
     
-    # Save model
-    model_path = Path("models/deepfake_detection.pth")
+    # Save model and weights
+    print("Saving model files...")
     torch.save(model.state_dict(), model_path)
-    print("Initial model created and saved successfully!")
+    torch.save(model.state_dict(), weights_path)
+    print("Model files created successfully!")
 
 def main():
+    """Set up all required models"""
     # Create models directory if it doesn't exist
     Path("models").mkdir(exist_ok=True)
     
     try:
-        # Download face detection model
+        # 1. Download face detection model
         download_face_cascade()
         
-        # Try to download pre-trained deepfake model
-        try:
-            download_deepfake_model()
-        except Exception as e:
-            print(f"Error downloading pre-trained model: {e}")
-            print("Creating initial model instead...")
-            create_and_save_initial_model()
+        # 2. Initialize deepfake detection model
+        download_deepfake_model()
         
         print("\nAll models have been set up successfully!")
+        print("\nAvailable models in ./models/:")
+        print("1. haarcascade_frontalface_default.xml (Face Detection)")
+        print("2. deepfake_detection.pth (Deepfake Detection)")
+        print("3. xception_weights.pth (Model Weights)")
         
     except Exception as e:
-        print(f"Error during model setup: {e}")
-        print("Please check your internet connection and try again.")
+        print(f"\nError during model setup: {e}")
+        print("Please check your Python environment and try again.")
 
 if __name__ == "__main__":
     main()
