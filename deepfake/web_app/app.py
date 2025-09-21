@@ -209,16 +209,42 @@ def handle_disconnect():
     logger.info("Client disconnected")
 
 if __name__ == '__main__':
-    print("🔍 Starting Deepfake Detection System")
+    print("\n🔍 Starting Deepfake Detection System")
     print("=" * 50)
-    print("📊 Web interface available at: http://localhost:5000")
+    
+    # First download models if they don't exist
+    if not (Path("models/deepfake_detection.pth").exists() and 
+            Path("models/xception_weights.pth").exists()):
+        print("⚠️  Models not found! Please run 'python download_models.py' first")
+        print("=" * 50)
+    
+    port = WEB_CONFIG.get('port', 5000)
+    print(f"📊 Web interface will be available at: http://localhost:{port}")
+    print("   (If this port is in use, we'll try the next available port)")
     print("🛑 Press Ctrl+C to stop")
     print()
     
-    socketio.run(
-        app,
-        host=WEB_CONFIG['host'],
-        port=WEB_CONFIG['port'],
-        debug=WEB_CONFIG['debug'],
-        allow_unsafe_werkzeug=True
-    )
+    try:
+        # First try the configured port
+        port = WEB_CONFIG.get('port', 5000)
+        try:
+            socketio.run(
+                app,
+                host=WEB_CONFIG['host'],
+                port=port,
+                debug=WEB_CONFIG['debug'],
+                allow_unsafe_werkzeug=True
+            )
+        except OSError:
+            # If port is in use, try the next available port
+            print(f"Port {port} is in use, trying port {port + 1}")
+            socketio.run(
+                app,
+                host=WEB_CONFIG['host'],
+                port=port + 1,
+                debug=WEB_CONFIG['debug'],
+                allow_unsafe_werkzeug=True
+            )
+    except Exception as e:
+        print(f"Error starting server: {e}")
+        raise
