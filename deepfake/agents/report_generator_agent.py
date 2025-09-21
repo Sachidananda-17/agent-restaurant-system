@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import Dict, Any, List
 import json
 from fpdf import FPDF
-import matplotlib.pyplot as plt
-import seaborn as sns
 from PIL import Image
 import io
 import base64
@@ -284,16 +282,28 @@ class ReportGeneratorAgent(BaseAgent):
         pdf.add_page()
         pdf.chapter_title('Visual Analysis')
         
-        # Create and add confidence score comparison chart
-        scores_fig = self._create_score_comparison_chart(analysis_result, forensic_result)
-        pdf.image(scores_fig, x=10, w=190)
+        # Add scores as text instead of chart
+        scores_text = "Analysis Scores:\n"
+        scores = {
+            'Deepfake Detection': analysis_result['confidence_score'],
+            'ELA Analysis': forensic_result['ela_analysis']['score'],
+            'Compression': forensic_result['compression_analysis']['score'],
+            'Noise Analysis': forensic_result['noise_analysis']['score']
+        }
+        for name, score in scores.items():
+            scores_text += f"- {name}: {score * 100:.1f}%\n"
+        pdf.chapter_body(scores_text)
         
-        # Add noise pattern visualization if available
+        # Add noise pattern analysis as text
         if 'noise_analysis' in forensic_result:
-            noise_fig = self._create_noise_pattern_visualization(
-                forensic_result['noise_analysis']
-            )
-            pdf.image(noise_fig, x=10, w=190)
+            noise_text = "\nNoise Pattern Analysis by Channel:\n"
+            stats = forensic_result['noise_analysis']['channel_statistics']
+            channels = ['Red', 'Green', 'Blue']
+            for channel, stat in zip(channels, stats):
+                noise_text += f"- {channel} Channel:\n"
+                noise_text += f"  Mean: {stat['mean']:.2f}\n"
+                noise_text += f"  Std: {stat['std']:.2f}\n"
+            pdf.chapter_body(noise_text)
 
     def _add_metadata_analysis(self, pdf: DeepfakeReport, metadata: Dict[str, Any]):
         """Add metadata analysis section"""
@@ -346,58 +356,6 @@ class ReportGeneratorAgent(BaseAgent):
         
         pdf.chapter_body(conclusion_text)
 
-    def _create_score_comparison_chart(
-        self,
-        analysis_result: Dict[str, Any],
-        forensic_result: Dict[str, Any]
-    ) -> str:
-        """Create score comparison chart"""
-        plt.figure(figsize=(10, 6))
-        
-        scores = {
-            'Deepfake Detection': analysis_result['confidence_score'],
-            'ELA Analysis': forensic_result['ela_analysis']['score'],
-            'Compression': forensic_result['compression_analysis']['score'],
-            'Noise Analysis': forensic_result['noise_analysis']['score']
-        }
-        
-        plt.bar(scores.keys(), scores.values())
-        plt.title('Analysis Scores Comparison')
-        plt.ylabel('Score')
-        plt.ylim(0, 1)
-        
-        # Save to bytes buffer
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png')
-        plt.close()
-        
-        return buf
-
-    def _create_noise_pattern_visualization(
-        self,
-        noise_analysis: Dict[str, Any]
-    ) -> str:
-        """Create noise pattern visualization"""
-        plt.figure(figsize=(10, 6))
-        
-        stats = noise_analysis['channel_statistics']
-        channels = ['Red', 'Green', 'Blue']
-        
-        x = range(len(channels))
-        means = [stat['mean'] for stat in stats]
-        stds = [stat['std'] for stat in stats]
-        
-        plt.errorbar(x, means, yerr=stds, fmt='o', capsize=5)
-        plt.xticks(x, channels)
-        plt.title('Noise Pattern Analysis by Color Channel')
-        plt.ylabel('Noise Level')
-        
-        # Save to bytes buffer
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png')
-        plt.close()
-        
-        return buf
 
     def _generate_report_summary(
         self,
