@@ -127,7 +127,7 @@ class ImageProcessorAgent(BaseAgent):
     def _load_model(self) -> nn.Module:
         """Load the deepfake detection model"""
         model = DeepfakeDetectionModel()
-        model_path = Path("models/deepfake_detection.pth")
+        model_path = Path(__file__).parent.parent / "models/deepfake_detection.pth"
         
         if model_path.exists():
             model.load_state_dict(torch.load(model_path))

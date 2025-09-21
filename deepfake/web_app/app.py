@@ -212,9 +212,12 @@ if __name__ == '__main__':
     print("\n🔍 Starting Deepfake Detection System")
     print("=" * 50)
     
-    # First download models if they don't exist
-    if not (Path("models/deepfake_detection.pth").exists() and 
-            Path("models/xception_weights.pth").exists()):
+    # Get the project root directory and check for models
+    PROJECT_ROOT = Path(__file__).parent.parent
+    if not (
+        (PROJECT_ROOT / "models/deepfake_detection.pth").exists() and 
+        (PROJECT_ROOT / "models/xception_weights.pth").exists()
+    ):
         print("⚠️  Models not found! Please run 'python download_models.py' first")
         print("=" * 50)
     
