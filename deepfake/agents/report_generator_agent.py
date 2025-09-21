@@ -196,16 +196,16 @@ class ReportGeneratorAgent(BaseAgent):
             f"Analysis Verdict: {verdict}\n"
             f"Confidence Level: {confidence}\n\n"
             f"Key Findings:\n"
-            f"• Deepfake Detection Score: {deepfake_score * 100:.1f}%\n"
-            f"• Forensic Analysis Score: {forensic_score * 100:.1f}%\n"
-            f"• Number of Faces Detected: {analysis_result['num_faces_detected']}\n"
+            f"- Deepfake Detection Score: {deepfake_score * 100:.1f}%\n"
+            f"- Forensic Analysis Score: {forensic_score * 100:.1f}%\n"
+            f"- Number of Faces Detected: {analysis_result['num_faces_detected']}\n"
         )
         
         if forensic_result["anomalies"]:
             summary_text += "\nDetected Anomalies:\n"
             for category, anomalies in forensic_result["anomalies"].items():
                 for anomaly in anomalies:
-                    summary_text += f"• {category.title()}: {anomaly}\n"
+                    summary_text += f"- {category.title()}: {anomaly}\n"
         
         pdf.chapter_body(summary_text)
 
@@ -217,20 +217,20 @@ class ReportGeneratorAgent(BaseAgent):
         # Add deepfake detection results
         analysis_text = (
             f"Deepfake Detection Analysis:\n"
-            f"• Prediction: {analysis_result['prediction'].upper()}\n"
-            f"• Confidence Score: {analysis_result['confidence_score'] * 100:.1f}%\n\n"
+            f"- Prediction: {analysis_result['prediction'].upper()}\n"
+            f"- Confidence Score: {analysis_result['confidence_score'] * 100:.1f}%\n\n"
             f"Image Analysis:\n"
-            f"• Resolution: {analysis_result['analysis_details']['resolution']}\n"
-            f"• Aspect Ratio: {analysis_result['analysis_details']['aspect_ratio']:.2f}\n\n"
+            f"- Resolution: {analysis_result['analysis_details']['resolution']}\n"
+            f"- Aspect Ratio: {analysis_result['analysis_details']['aspect_ratio']:.2f}\n\n"
         )
         
         # Add color analysis
         color_analysis = analysis_result['analysis_details']['color_analysis']
         analysis_text += (
             f"Color Distribution Analysis:\n"
-            f"• Red Channel - Mean: {color_analysis['mean_r']:.1f}, Std: {color_analysis['std_r']:.1f}\n"
-            f"• Green Channel - Mean: {color_analysis['mean_g']:.1f}, Std: {color_analysis['std_g']:.1f}\n"
-            f"• Blue Channel - Mean: {color_analysis['mean_b']:.1f}, Std: {color_analysis['std_b']:.1f}\n"
+            f"- Red Channel - Mean: {color_analysis['mean_r']:.1f}, Std: {color_analysis['std_r']:.1f}\n"
+            f"- Green Channel - Mean: {color_analysis['mean_g']:.1f}, Std: {color_analysis['std_g']:.1f}\n"
+            f"- Blue Channel - Mean: {color_analysis['mean_b']:.1f}, Std: {color_analysis['std_b']:.1f}\n"
         )
         
         pdf.chapter_body(analysis_text)
@@ -250,26 +250,26 @@ class ReportGeneratorAgent(BaseAgent):
         # Add ELA analysis
         ela_text = (
             f"Error Level Analysis (ELA):\n"
-            f"• Score: {forensic_result['ela_analysis']['score'] * 100:.1f}%\n"
-            f"• Analysis: {forensic_result['ela_analysis']['analysis']}\n"
-            f"• Mean Error: {forensic_result['ela_analysis']['mean_error']:.2f}\n"
-            f"• Standard Deviation: {forensic_result['ela_analysis']['std_error']:.2f}\n\n"
+            f"- Score: {forensic_result['ela_analysis']['score'] * 100:.1f}%\n"
+            f"- Analysis: {forensic_result['ela_analysis']['analysis']}\n"
+            f"- Mean Error: {forensic_result['ela_analysis']['mean_error']:.2f}\n"
+            f"- Standard Deviation: {forensic_result['ela_analysis']['std_error']:.2f}\n\n"
         )
         
         # Add compression analysis
         compression_text = (
             f"Compression Analysis:\n"
-            f"• Score: {forensic_result['compression_analysis']['score'] * 100:.1f}%\n"
-            f"• Analysis: {forensic_result['compression_analysis']['analysis']}\n"
-            f"• Mean Coefficients: {forensic_result['compression_analysis']['mean_coefficients']:.2f}\n"
-            f"• Std Coefficients: {forensic_result['compression_analysis']['std_coefficients']:.2f}\n\n"
+            f"- Score: {forensic_result['compression_analysis']['score'] * 100:.1f}%\n"
+            f"- Analysis: {forensic_result['compression_analysis']['analysis']}\n"
+            f"- Mean Coefficients: {forensic_result['compression_analysis']['mean_coefficients']:.2f}\n"
+            f"- Std Coefficients: {forensic_result['compression_analysis']['std_coefficients']:.2f}\n\n"
         )
         
         # Add noise analysis
         noise_text = (
             f"Noise Pattern Analysis:\n"
-            f"• Score: {forensic_result['noise_analysis']['score'] * 100:.1f}%\n"
-            f"• Analysis: {forensic_result['noise_analysis']['analysis']}\n\n"
+            f"- Score: {forensic_result['noise_analysis']['score'] * 100:.1f}%\n"
+            f"- Analysis: {forensic_result['noise_analysis']['analysis']}\n\n"
         )
         
         pdf.chapter_body(ela_text + compression_text + noise_text)
@@ -303,7 +303,7 @@ class ReportGeneratorAgent(BaseAgent):
         metadata_text = "File Information:\n"
         for key, value in metadata.items():
             if key not in ('JPEGThumbnail', 'TIFFThumbnail'):
-                metadata_text += f"• {key}: {value}\n"
+                metadata_text += f"- {key}: {value}\n"
         
         pdf.chapter_body(metadata_text)
 
@@ -334,12 +334,12 @@ class ReportGeneratorAgent(BaseAgent):
         conclusion_text += "Supporting Evidence:\n"
         if analysis_result["confidence_score"] > 0.5:
             conclusion_text += (
-                f"• Deep learning model detected manipulation patterns with "
+                f"- Deep learning model detected manipulation patterns with "
                 f"{analysis_result['confidence_score'] * 100:.1f}% confidence\n"
             )
         
         if forensic_result["anomalies"]:
-            conclusion_text += "• Detected forensic anomalies:\n"
+            conclusion_text += "- Detected forensic anomalies:\n"
             for category, anomalies in forensic_result["anomalies"].items():
                 for anomaly in anomalies:
                     conclusion_text += f"  - {anomaly}\n"
