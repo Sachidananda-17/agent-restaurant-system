@@ -9,7 +9,7 @@ setup(
         'torch',
         'torchvision',
         'opencv-python',
-        'numpy==1.24.3',
+        'numpy>=1.24.3',
         'Pillow',
         'reportlab',
         'fpdf2',
