@@ -201,9 +201,13 @@ class ReportGeneratorAgent(BaseAgent):
         verdict = "LIKELY FAKE" if is_fake else "LIKELY GENUINE"
         confidence = f"{weighted_score * 100:.1f}%"
         
+        # Get confidence level interpretation
+        confidence_level = self._get_confidence_interpretation(weighted_score)
+        
         summary_text = (
             f"Analysis Verdict: {verdict}\n"
-            f"Confidence Level: {confidence}\n\n"
+            f"Confidence Level: {confidence} ({confidence_level})\n\n"
+            f"Interpretation: {self._get_verdict_explanation(weighted_score, analysis_result, forensic_result)}\n\n"
             f"Key Findings:\n"
             f"- Deepfake Detection Score: {deepfake_score * 100:.1f}%\n"
             f"- Forensic Analysis Score: {forensic_score * 100:.1f}%\n"
@@ -316,13 +320,19 @@ class ReportGeneratorAgent(BaseAgent):
         # Add scores as text
         scores_text = "\nAnalysis Scores:\n"
         scores = {
-            'Deepfake Detection': analysis_result['confidence_score'],
-            'ELA Analysis': forensic_result['ela_analysis']['score'],
-            'Compression': forensic_result['compression_analysis']['score'],
-            'Noise Analysis': forensic_result['noise_analysis']['score']
+            'Deepfake Detection (40% weight)': analysis_result['confidence_score'],
+            'ELA Analysis (30% weight)': forensic_result['ela_analysis']['score'],
+            'Compression (20% weight)': max(0, 1 + forensic_result['compression_analysis']['score']),
+            'Noise Analysis (10% weight)': forensic_result['noise_analysis']['score']
         }
+        
+        # Add visual indicators for scores
         for name, score in scores.items():
-            scores_text += f"- {name}: {score * 100:.1f}%\n"
+            bar_length = int(score * 20)  # 20 characters for 100%
+            bar = '█' * bar_length + '░' * (20 - bar_length)
+            confidence_level = self._get_confidence_interpretation(score)
+            scores_text += f"- {name}:\n"
+            scores_text += f"  {score * 100:.1f}% {bar} ({confidence_level})\n"
         pdf.chapter_body(scores_text)
         
         # Add noise pattern analysis as text
@@ -386,7 +396,87 @@ class ReportGeneratorAgent(BaseAgent):
                     conclusion_text += f"  - {anomaly}\n"
         
         pdf.chapter_body(conclusion_text)
+        
+        # Add recommendations
+        pdf.ln(10)
+        pdf.chapter_title('Recommendations')
+        recommendations = self._get_recommendations(weighted_score, analysis_result, forensic_result)
+        pdf.chapter_body(recommendations)
 
+
+    def _get_confidence_interpretation(self, score: float) -> str:
+        """Get human-readable interpretation of confidence score"""
+        if score >= 0.9:
+            return "Very High Confidence"
+        elif score >= 0.75:
+            return "High Confidence"
+        elif score >= 0.6:
+            return "Moderate Confidence"
+        elif score >= 0.5:
+            return "Low Confidence"
+        else:
+            return "Very Low Confidence"
+
+    def _get_verdict_explanation(
+        self,
+        weighted_score: float,
+        analysis_result: Dict[str, Any],
+        forensic_result: Dict[str, Any]
+    ) -> str:
+        """Generate detailed explanation of the verdict"""
+        model_verdict = "fake" if analysis_result["prediction"].upper() == "FAKE" else "genuine"
+        ela_verdict = "manipulated" if forensic_result["ela_analysis"]["score"] < 0.5 else "not manipulated"
+        compression_analysis = forensic_result["compression_analysis"]["analysis"].lower()
+        noise_verdict = forensic_result["noise_analysis"]["analysis"]
+        
+        explanation = (
+            f"The deep learning model suggests this image is {model_verdict}. "
+            f"Error Level Analysis indicates the image is {ela_verdict}. "
+            f"The image shows {compression_analysis}, and noise analysis reveals {noise_verdict.lower()}. "
+            f"Based on these factors, with a weighted confidence of {weighted_score * 100:.1f}%, "
+            f"our analysis suggests this image is {'likely manipulated' if weighted_score > 0.5 else 'likely genuine'}."
+        )
+        return explanation
+
+    def _get_recommendations(
+        self,
+        weighted_score: float,
+        analysis_result: Dict[str, Any],
+        forensic_result: Dict[str, Any]
+    ) -> str:
+        """Generate recommendations based on analysis results"""
+        recommendations = []
+        
+        # Add general recommendations
+        if weighted_score > 0.5:
+            recommendations.extend([
+                "Consider requesting the original, unedited source image",
+                "Look for additional context or metadata about the image's origin",
+                "If this image is being used in a critical context, seek additional verification methods"
+            ])
+        
+        # Add specific recommendations based on analysis
+        if forensic_result["compression_analysis"]["score"] < 0:
+            recommendations.append(
+                "The image shows unusual compression patterns. Request a higher quality version if available."
+            )
+        
+        if forensic_result["noise_analysis"]["score"] == 0:
+            recommendations.append(
+                "Inconsistent noise patterns detected. This could indicate image manipulation or heavy post-processing."
+            )
+        
+        if analysis_result["num_faces_detected"] > 0:
+            recommendations.append(
+                f"This image contains {analysis_result['num_faces_detected']} detected face(s). "
+                "For face-related analysis, consider using specialized face authentication tools."
+            )
+        
+        # Format recommendations
+        if not recommendations:
+            recommendations = ["No specific recommendations at this time."]
+        
+        return "Based on our analysis, we recommend:\n" + "\n".join(f"- {r}" for r in recommendations)
 
     def _generate_report_summary(
         self,
