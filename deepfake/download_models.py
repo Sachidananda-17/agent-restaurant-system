@@ -3,16 +3,21 @@ Script to download and set up required models for deepfake detection
 """
 
 import os
+import sys
 import gdown
 import torch
 import torch.nn as nn
-from pathlib import Path
+from pathlib import Path as PathLib
 import cv2
 import urllib.request
 
+# Add the current directory to Python path
+current_dir = PathLib(__file__).parent
+sys.path.append(str(current_dir))
+
 def download_face_cascade():
     """Download the Haar Cascade face detection model"""
-    face_cascade_path = Path("models/haarcascade_frontalface_default.xml")
+    face_cascade_path = PathLib("models/haarcascade_frontalface_default.xml")
     if not face_cascade_path.exists():
         print("Downloading face detection model...")
         url = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml"
@@ -21,8 +26,8 @@ def download_face_cascade():
 
 def download_deepfake_model():
     """Initialize the deepfake detection model"""
-    model_path = Path("models/deepfake_detection.pth")
-    weights_path = Path("models/xception_weights.pth")
+    model_path = PathLib("models/deepfake_detection.pth")
+    weights_path = PathLib("models/xception_weights.pth")
     
     print("\nInitializing deepfake detection models...")
     
@@ -54,7 +59,7 @@ def download_deepfake_model():
 def main():
     """Set up all required models"""
     # Create models directory if it doesn't exist
-    Path("models").mkdir(exist_ok=True)
+    PathLib("models").mkdir(exist_ok=True)
     
     try:
         # 1. Download face detection model
