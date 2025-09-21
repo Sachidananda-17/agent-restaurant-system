@@ -13,6 +13,7 @@ from typing import Dict, Any, List, Tuple
 import json
 import numpy as np
 from collections import defaultdict
+import cv2
 
 from uagents import Context
 from .base_agent import BaseAgent, TaskRequest, ForensicResult

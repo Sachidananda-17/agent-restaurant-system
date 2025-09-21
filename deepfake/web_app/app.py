@@ -182,7 +182,7 @@ def start_analysis(task_id: str, filepath: str):
         # Start forensic analysis
         analysis_tasks[task_id]['current_stage'] = 'forensic_analysis'
         emit_status_update(task_id)
-        metadata = forensic_analyzer._analyze_metadata(Path(filepath))
+        metadata = forensic_analyzer._analyze_forensics(Path(filepath))
         analysis_tasks[task_id]['stages']['forensic_analysis'] = True
         analysis_tasks[task_id]['forensic_results'] = metadata
         
