@@ -56,12 +56,12 @@ class BaseAgent:
     
     def __init__(self, name: str, seed: str, port: int):
         """Initialize the agent with basic configuration"""
+        # Configure agent with minimal network interaction
         self.agent = Agent(
             name=name,
             seed=seed,
             port=port,
-            endpoint=f"http://127.0.0.1:{port}",  # Local endpoint for development
-            enable_registration=False  # Disable network registration for local development
+            endpoint=None  # Disable external endpoints for local development
         )
         self.logger = self._setup_logger()
         self._register_handlers()
