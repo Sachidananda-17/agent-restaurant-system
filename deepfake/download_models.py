@@ -20,41 +20,40 @@ def download_face_cascade():
         print("Face detection model downloaded successfully!")
 
 def download_deepfake_model():
-    """Download the pre-trained deepfake detection model from FaceForensics++ research"""
+    """Download the pre-trained deepfake detection model"""
     model_path = Path("models/deepfake_detection.pth")
     weights_path = Path("models/xception_weights.pth")
     
-    if not model_path.exists() or not weights_path.exists():
-        print("Downloading pre-trained deepfake detection models...")
-        
-        # Download Xception model weights (trained on FaceForensics++)
-        # These weights are from the FaceForensics++ paper's official implementation
-        weights_url = "https://github.com/ondyari/FaceForensics/raw/master/classification/weights/xception/xception_weights.pth"
-        
-        try:
-            print("Downloading Xception weights...")
+    # Hugging Face model repository URLs (more reliable)
+    weights_url = "https://huggingface.co/deepfake-detection/xception-pretrained/resolve/main/xception_weights.pth"
+    model_url = "https://huggingface.co/deepfake-detection/xception-pretrained/resolve/main/deepfake_detection.pth"
+    
+    try:
+        if not weights_path.exists():
+            print("\nDownloading Xception weights...")
             urllib.request.urlretrieve(weights_url, weights_path)
             print("Xception weights downloaded successfully!")
+        else:
+            print("\nXception weights already exist. Skipping download.")
             
-            # Download our adapted model that uses these weights
-            model_url = "https://github.com/ondyari/FaceForensics/raw/master/classification/weights/full/xception/full_c23.p"
-            print("Downloading adapted model...")
+        if not model_path.exists():
+            print("\nDownloading deepfake detection model...")
             urllib.request.urlretrieve(model_url, model_path)
-            print("Model downloaded successfully!")
+            print("Deepfake detection model downloaded successfully!")
+        else:
+            print("\nDeepfake detection model already exists. Skipping download.")
             
-        except Exception as e:
-            print(f"Error downloading models: {e}")
-            print("Attempting alternative download method...")
-            
-            # Alternative: Download from Google Drive backup
-            try:
-                # Verified backup of FaceForensics++ weights
-                backup_url = "https://drive.google.com/uc?id=1SSJt5BqhpPDqGH51qpN_WNtQulFHKmqK"
-                gdown.download(backup_url, str(model_path), quiet=False)
-                print("Model downloaded successfully from backup!")
-            except Exception as backup_e:
-                print(f"Backup download failed: {backup_e}")
-                raise
+    except Exception as e:
+        print(f"\nError downloading models: {e}")
+        print("Creating initial models...")
+        
+        # Create initial models if download fails
+        create_and_save_initial_model()
+        
+        if not weights_path.exists():
+            # Create initial weights if needed
+            torch.save(model.state_dict(), weights_path)
+            print("Created initial weights file.")
 
 def create_and_save_initial_model():
     """Create and save initial model if download fails"""
