@@ -222,8 +222,15 @@ if __name__ == '__main__':
         print("=" * 50)
     
     port = WEB_CONFIG.get('port', 5000)
-    print(f"📊 Web interface will be available at: http://localhost:{port}")
+    print("System Components:")
+    print(f"📊 Web Interface: http://localhost:{port}")
     print("   (If this port is in use, we'll try the next available port)")
+    print("🤖 Agent Services:")
+    print("   - Coordinator Agent: Port 8000 (internal)")
+    print("   - Image Processor: Port 8001 (internal)")
+    print("   - Forensic Analyzer: Port 8002 (internal)")
+    print("   - Report Generator: Port 8003 (internal)")
+    print("\n⚠️  Note: Only use the Web Interface URL to access the system")
     print("🛑 Press Ctrl+C to stop")
     print()
     
