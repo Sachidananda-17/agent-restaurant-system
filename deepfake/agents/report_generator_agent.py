@@ -125,7 +125,9 @@ class ReportGeneratorAgent(BaseAgent):
         forensic_result: Dict[str, Any]
     ) -> Path:
         """Create comprehensive PDF report"""
+        print("\n📄 Starting report generation process...")
         report_path = self.report_dir / f"deepfake_analysis_{task_id}.pdf"
+        print(f"📝 Report will be saved to: {report_path}")
         
         # Create PDF
         pdf = DeepfakeReport()
@@ -160,16 +162,16 @@ class ReportGeneratorAgent(BaseAgent):
     def _add_cover_page(self, pdf: DeepfakeReport, task_id: str):
         """Add report cover page"""
         pdf.add_page()
-        pdf.set_font('DejaVu', 'B', 24)
+        pdf.set_font('Helvetica', 'B', 24)
         pdf.cell(0, 20, 'Deepfake Analysis Report', 0, 1, 'C')
         pdf.ln(20)
         
-        pdf.set_font('DejaVu', '', 12)
+        pdf.set_font('Helvetica', '', 12)
         pdf.cell(0, 10, f'Analysis ID: {task_id}', 0, 1, 'C')
         pdf.cell(0, 10, f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', 0, 1, 'C')
         
         pdf.ln(50)
-        pdf.set_font('DejaVu', '', 10)
+        pdf.set_font('Helvetica', '', 10)
         pdf.cell(0, 10, 'CONFIDENTIAL', 0, 1, 'C')
 
     def _add_executive_summary(
