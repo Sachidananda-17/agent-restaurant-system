@@ -77,7 +77,7 @@ class ForensicAnalyzerAgent(BaseAgent):
             except Exception as e:
                 await self.handle_error(ctx, msg.task_id, e)
 
-    async def _analyze_forensics(self, image_path: Path) -> Dict[str, Any]:
+    def _analyze_forensics(self, image_path: Path) -> Dict[str, Any]:
         """Perform comprehensive forensic analysis"""
         # Extract metadata
         metadata = self._extract_metadata(image_path)
