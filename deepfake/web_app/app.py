@@ -191,6 +191,8 @@ def start_analysis(task_id: str, filepath: str):
             print("✅ Image processing complete")
             print("Results:", json.dumps(result, indent=2))
             analysis_tasks[task_id]['stages']['image_processing'] = True
+            # Add filepath to results for report generation
+            result['filepath'] = filepath
             analysis_tasks[task_id]['image_results'] = result
         except Exception as e:
             print(f"❌ Image processing failed: {str(e)}")

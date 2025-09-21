@@ -281,9 +281,29 @@ class ReportGeneratorAgent(BaseAgent):
         """Add visualization section"""
         pdf.add_page()
         pdf.chapter_title('Visual Analysis')
+
+        # Add original image
+        if 'filepath' in analysis_result:
+            try:
+                pdf.image(analysis_result['filepath'], x=10, y=None, w=190)
+                pdf.ln(10)
+                pdf.chapter_body("Original Image")
+                pdf.ln(10)
+            except Exception as e:
+                pdf.chapter_body(f"Note: Could not add original image ({str(e)})")
+
+        # Add heatmap if available
+        if 'heatmap_path' in analysis_result and Path(analysis_result['heatmap_path']).exists():
+            try:
+                pdf.image(analysis_result['heatmap_path'], x=10, y=None, w=190)
+                pdf.ln(10)
+                pdf.chapter_body("Deepfake Detection Heatmap")
+                pdf.ln(10)
+            except Exception as e:
+                pdf.chapter_body(f"Note: Could not add heatmap visualization ({str(e)})")
         
-        # Add scores as text instead of chart
-        scores_text = "Analysis Scores:\n"
+        # Add scores as text
+        scores_text = "\nAnalysis Scores:\n"
         scores = {
             'Deepfake Detection': analysis_result['confidence_score'],
             'ELA Analysis': forensic_result['ela_analysis']['score'],
