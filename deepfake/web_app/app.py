@@ -189,10 +189,13 @@ def start_analysis(task_id: str, filepath: str):
         try:
             result = image_processor._analyze_image(Path(filepath))
             print("✅ Image processing complete")
+            # Convert Path objects to strings for JSON serialization
+            if 'heatmap_path' in result:
+                result['heatmap_path'] = str(result['heatmap_path'])
             print("Results:", json.dumps(result, indent=2))
             analysis_tasks[task_id]['stages']['image_processing'] = True
             # Add filepath to results for report generation
-            result['filepath'] = filepath
+            result['filepath'] = str(filepath)  # Convert Path to string
             analysis_tasks[task_id]['image_results'] = result
         except Exception as e:
             print(f"❌ Image processing failed: {str(e)}")
@@ -225,7 +228,7 @@ def start_analysis(task_id: str, filepath: str):
             print("✅ Report generation complete")
             print(f"Report saved to: {report_path}")
             analysis_tasks[task_id]['stages']['report_generation'] = True
-            analysis_tasks[task_id]['report_path'] = report_path
+            analysis_tasks[task_id]['report_path'] = str(report_path)  # Convert Path to string
         except Exception as e:
             print(f"❌ Report generation failed: {str(e)}")
             raise
