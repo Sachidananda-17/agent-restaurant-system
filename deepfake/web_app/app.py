@@ -162,25 +162,46 @@ def start_analysis(task_id: str, filepath: str):
     """Start the analysis workflow"""
     try:
         # Update task status
-        analysis_tasks[task_id]['status'] = 'processing'
+        analysis_tasks[task_id].update({
+            'status': 'processing',
+            'stages': {
+                'image_processing': False,
+                'forensic_analysis': False,
+                'report_generation': False
+            }
+        })
         emit_status_update(task_id)
         
-        # Start coordinator agent
-        coordinator.agent.run()
+        # Start image processing
+        analysis_tasks[task_id]['current_stage'] = 'image_processing'
+        emit_status_update(task_id)
+        result = image_processor._analyze_image(Path(filepath))
+        analysis_tasks[task_id]['stages']['image_processing'] = True
+        analysis_tasks[task_id]['image_results'] = result
         
-        # Start analysis agents
-        image_processor.agent.run()
-        forensic_analyzer.agent.run()
-        report_generator.agent.run()
+        # Start forensic analysis
+        analysis_tasks[task_id]['current_stage'] = 'forensic_analysis'
+        emit_status_update(task_id)
+        metadata = forensic_analyzer._analyze_metadata(Path(filepath))
+        analysis_tasks[task_id]['stages']['forensic_analysis'] = True
+        analysis_tasks[task_id]['forensic_results'] = metadata
         
-        # Monitor progress
-        while analysis_tasks[task_id]['status'] != 'completed':
-            time.sleep(1)
-            # Update progress based on completed stages
-            completed = sum(1 for stage in analysis_tasks[task_id].get('stages', {}).values() if stage)
-            total = 4  # Total number of stages
-            analysis_tasks[task_id]['progress'] = (completed / total) * 100
-            emit_status_update(task_id)
+        # Generate report
+        analysis_tasks[task_id]['current_stage'] = 'report_generation'
+        emit_status_update(task_id)
+        report_path = report_generator._generate_report(
+            task_id,
+            analysis_tasks[task_id]['image_results'],
+            analysis_tasks[task_id]['forensic_results'],
+            filepath
+        )
+        analysis_tasks[task_id]['stages']['report_generation'] = True
+        analysis_tasks[task_id]['report_path'] = report_path
+        
+        # Update final status
+        analysis_tasks[task_id]['status'] = 'completed'
+        analysis_tasks[task_id]['progress'] = 100
+        emit_status_update(task_id)
         
     except Exception as e:
         logger.error(f"Analysis error: {str(e)}")
