@@ -11,9 +11,9 @@ from pathlib import Path as PathLib
 import cv2
 import urllib.request
 
-# Add the current directory to Python path
-current_dir = PathLib(__file__).parent
-sys.path.append(str(current_dir))
+# Add the project root to Python path
+project_root = PathLib(__file__).parent.absolute()
+sys.path.insert(0, str(project_root))
 
 def download_face_cascade():
     """Download the Haar Cascade face detection model"""
@@ -35,8 +35,6 @@ def download_deepfake_model():
     import sys
     from pathlib import Path
     
-    # Add the current directory to Python path
-    sys.path.append(str(Path(__file__).parent))
     
     from agents.image_processor_agent import DeepfakeDetectionModel
     model = DeepfakeDetectionModel()
