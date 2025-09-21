@@ -104,21 +104,24 @@ class BaseAgent:
         @self.agent.on_interval(period=300.0)
         async def cleanup_old_tasks(ctx: Context):
             """Clean up old completed tasks periodically"""
-            tasks = ctx.storage.get("tasks", {})
-            current_time = datetime.now()
-            
-            # Remove tasks older than 1 hour
-            tasks = {
-                task_id: task_data 
-                for task_id, task_data in tasks.items()
-                if (current_time - datetime.fromisoformat(task_data["timestamp"])).total_seconds() < 3600
-            }
-            
-            ctx.storage.set("tasks", tasks)
+            try:
+                tasks = ctx.storage.get("tasks") or {}
+                current_time = datetime.now()
+                
+                # Remove tasks older than 1 hour
+                tasks = {
+                    task_id: task_data 
+                    for task_id, task_data in tasks.items()
+                    if (current_time - datetime.fromisoformat(task_data["timestamp"])).total_seconds() < 3600
+                }
+                
+                ctx.storage.set("tasks", tasks)
+            except Exception as e:
+                self.logger.error(f"Error cleaning up tasks: {e}")
 
     def _store_task(self, ctx: Context, task_id: str, data: Dict[str, Any]):
         """Store task data in agent storage"""
-        tasks = ctx.storage.get("tasks", {})
+        tasks = ctx.storage.get("tasks") or {}
         tasks[task_id] = {
             "timestamp": datetime.now().isoformat(),
             "data": data,
@@ -128,7 +131,7 @@ class BaseAgent:
 
     def _update_task_status(self, ctx: Context, task_id: str, status: str, result: Optional[Dict] = None):
         """Update task status and result"""
-        tasks = ctx.storage.get("tasks", {})
+        tasks = ctx.storage.get("tasks") or {}
         if task_id in tasks:
             tasks[task_id]["status"] = status
             if result:
