@@ -59,6 +59,7 @@ def main():
     # Create required directories if they don't exist
     PathLib("models").mkdir(exist_ok=True)
     PathLib("logs").mkdir(exist_ok=True)
+    PathLib("outputs").mkdir(exist_ok=True)
     
     try:
         # 1. Download face detection model
