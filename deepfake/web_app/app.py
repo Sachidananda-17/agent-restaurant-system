@@ -161,6 +161,9 @@ def get_report(task_id: str):
 def start_analysis(task_id: str, filepath: str):
     """Start the analysis workflow"""
     try:
+        print(f"\n🔍 Starting analysis for task {task_id}")
+        print(f"📁 Processing file: {filepath}")
+        
         # Update task status
         analysis_tasks[task_id].update({
             'status': 'processing',
@@ -170,33 +173,61 @@ def start_analysis(task_id: str, filepath: str):
                 'report_generation': False
             }
         })
+        print("✅ Task initialized")
+        
+        # Log task data
+        print("\n📊 Current task data:")
+        print(json.dumps(analysis_tasks[task_id], indent=2))
+        
         emit_status_update(task_id)
+        print("✅ Initial status update sent")
         
         # Start image processing
+        print("\n🖼️ Starting Image Processing")
         analysis_tasks[task_id]['current_stage'] = 'image_processing'
         emit_status_update(task_id)
-        result = image_processor._analyze_image(Path(filepath))
-        analysis_tasks[task_id]['stages']['image_processing'] = True
-        analysis_tasks[task_id]['image_results'] = result
+        try:
+            result = image_processor._analyze_image(Path(filepath))
+            print("✅ Image processing complete")
+            print("Results:", json.dumps(result, indent=2))
+            analysis_tasks[task_id]['stages']['image_processing'] = True
+            analysis_tasks[task_id]['image_results'] = result
+        except Exception as e:
+            print(f"❌ Image processing failed: {str(e)}")
+            raise
         
         # Start forensic analysis
+        print("\n🔍 Starting Forensic Analysis")
         analysis_tasks[task_id]['current_stage'] = 'forensic_analysis'
         emit_status_update(task_id)
-        metadata = forensic_analyzer._analyze_forensics(Path(filepath))
-        analysis_tasks[task_id]['stages']['forensic_analysis'] = True
-        analysis_tasks[task_id]['forensic_results'] = metadata
+        try:
+            metadata = forensic_analyzer._analyze_forensics(Path(filepath))
+            print("✅ Forensic analysis complete")
+            print("Results:", json.dumps(metadata, indent=2))
+            analysis_tasks[task_id]['stages']['forensic_analysis'] = True
+            analysis_tasks[task_id]['forensic_results'] = metadata
+        except Exception as e:
+            print(f"❌ Forensic analysis failed: {str(e)}")
+            raise
         
         # Generate report
+        print("\n📄 Starting Report Generation")
         analysis_tasks[task_id]['current_stage'] = 'report_generation'
         emit_status_update(task_id)
-        report_path = report_generator._generate_report(
-            task_id,
-            analysis_tasks[task_id]['image_results'],
-            analysis_tasks[task_id]['forensic_results'],
-            filepath
-        )
-        analysis_tasks[task_id]['stages']['report_generation'] = True
-        analysis_tasks[task_id]['report_path'] = report_path
+        try:
+            report_path = report_generator._generate_report(
+                task_id,
+                analysis_tasks[task_id]['image_results'],
+                analysis_tasks[task_id]['forensic_results'],
+                filepath
+            )
+            print("✅ Report generation complete")
+            print(f"Report saved to: {report_path}")
+            analysis_tasks[task_id]['stages']['report_generation'] = True
+            analysis_tasks[task_id]['report_path'] = report_path
+        except Exception as e:
+            print(f"❌ Report generation failed: {str(e)}")
+            raise
         
         # Update final status
         analysis_tasks[task_id]['status'] = 'completed'
