@@ -27,6 +27,12 @@ def download_deepfake_model():
     print("\nInitializing deepfake detection models...")
     
     # Create the initial model
+    import sys
+    from pathlib import Path
+    
+    # Add the current directory to Python path
+    sys.path.append(str(Path(__file__).parent))
+    
     from agents.image_processor_agent import DeepfakeDetectionModel
     model = DeepfakeDetectionModel()
     
