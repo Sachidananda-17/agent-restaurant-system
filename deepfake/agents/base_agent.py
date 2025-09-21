@@ -60,7 +60,8 @@ class BaseAgent:
             name=name,
             seed=seed,
             port=port,
-            endpoint=f"http://127.0.0.1:{port}"  # Local endpoint for development
+            endpoint=f"http://127.0.0.1:{port}",  # Local endpoint for development
+            enable_registration=False  # Disable network registration for local development
         )
         self.logger = self._setup_logger()
         self._register_handlers()
