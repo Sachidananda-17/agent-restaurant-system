@@ -12,6 +12,11 @@ import threading
 import logging
 from typing import Dict, Any
 import json
+import sys
+from pathlib import Path
+
+# Add parent directory to Python path
+sys.path.append(str(Path(__file__).parent.parent))
 
 from config import WEB_CONFIG
 from agents.coordinator_agent import CoordinatorAgent
