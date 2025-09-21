@@ -81,7 +81,7 @@ class ReportGeneratorAgent(BaseAgent):
                 start_time = time.time()
                 
                 # Generate report
-                report_path = await self._create_report(
+                report_path = self._generate_report(
                     msg.task_id,
                     msg.data["analysis_result"],
                     msg.data["forensic_result"]
@@ -118,7 +118,7 @@ class ReportGeneratorAgent(BaseAgent):
             except Exception as e:
                 await self.handle_error(ctx, msg.task_id, e)
 
-    async def _create_report(
+    def _generate_report(
         self,
         task_id: str,
         analysis_result: Dict[str, Any],
