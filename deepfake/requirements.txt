@@ -1,4 +1,5 @@
 # Core dependencies
+gdown==4.7.1  # For downloading models from Google Drive
 uagents==0.22.8
 Flask==2.3.3
 Flask-SocketIO==5.3.6

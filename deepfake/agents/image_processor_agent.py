@@ -17,27 +17,92 @@ from uagents import Context
 from .base_agent import BaseAgent, TaskRequest, AnalysisResult
 
 class DeepfakeDetectionModel(nn.Module):
-    """Simple CNN model for deepfake detection"""
+    """Xception-based model for deepfake detection (FaceForensics++)"""
     def __init__(self):
         super(DeepfakeDetectionModel, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, 3)
-        self.conv2 = nn.Conv2d(32, 64, 3)
-        self.conv3 = nn.Conv2d(64, 128, 3)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(128 * 26 * 26, 512)
-        self.fc2 = nn.Linear(512, 2)
+        
+        # Entry flow
+        self.conv1 = nn.Conv2d(3, 32, 3, stride=2, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.relu = nn.ReLU(inplace=True)
+        
+        self.conv2 = nn.Conv2d(32, 64, 3, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(64)
+        
+        # Middle flow (repeated blocks)
+        self.middle_flow = nn.Sequential(
+            self._make_block(64, 128),
+            self._make_block(128, 256),
+            self._make_block(256, 728)
+        )
+        
+        # Exit flow
+        self.exit_conv1 = nn.Conv2d(728, 1024, 3, padding=1, bias=False)
+        self.exit_bn1 = nn.BatchNorm2d(1024)
+        self.exit_conv2 = nn.Conv2d(1024, 1536, 3, padding=1, bias=False)
+        self.exit_bn2 = nn.BatchNorm2d(1536)
+        self.exit_conv3 = nn.Conv2d(1536, 2048, 3, padding=1, bias=False)
+        self.exit_bn3 = nn.BatchNorm2d(2048)
+        
+        # Classification head
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(2048, 2)
         self.dropout = nn.Dropout(0.5)
-        self.relu = nn.ReLU()
+
+    def _make_block(self, in_channels, out_channels):
+        """Create a residual block"""
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, 3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, 3, padding=1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True)
+        )
 
     def forward(self, x):
-        x = self.pool(self.relu(self.conv1(x)))
-        x = self.pool(self.relu(self.conv2(x)))
-        x = self.pool(self.relu(self.conv3(x)))
-        x = x.view(-1, 128 * 26 * 26)
-        x = self.relu(self.fc1(x))
+        # Entry flow
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.relu(x)
+        
+        # Middle flow
+        x = self.middle_flow(x)
+        
+        # Exit flow
+        x = self.exit_conv1(x)
+        x = self.exit_bn1(x)
+        x = self.relu(x)
+        
+        x = self.exit_conv2(x)
+        x = self.exit_bn2(x)
+        x = self.relu(x)
+        
+        x = self.exit_conv3(x)
+        x = self.exit_bn3(x)
+        x = self.relu(x)
+        
+        # Classification
+        x = self.avg_pool(x)
+        x = x.view(x.size(0), -1)
         x = self.dropout(x)
-        x = self.fc2(x)
+        x = self.fc(x)
+        
         return x
+
+    def load_pretrained_weights(self):
+        """Load pre-trained weights"""
+        weights_path = Path("models/xception_weights.pth")
+        if weights_path.exists():
+            state_dict = torch.load(weights_path)
+            self.load_state_dict(state_dict)
+            print("Loaded pre-trained weights successfully!")
+            return True
+        return False
 
 class ImageProcessorAgent(BaseAgent):
     """

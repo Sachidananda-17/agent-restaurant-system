@@ -90,7 +90,7 @@ def start_dashboard():
     # Import and run the Flask app
     try:
         from app import app, socketio
-        socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+        socketio.run(app, host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True)
     except ImportError as e:
         print(f"❌ Failed to import app: {e}")
         return False
