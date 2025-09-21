@@ -218,8 +218,7 @@ def start_analysis(task_id: str, filepath: str):
             report_path = report_generator._generate_report(
                 task_id,
                 analysis_tasks[task_id]['image_results'],
-                analysis_tasks[task_id]['forensic_results'],
-                filepath
+                analysis_tasks[task_id]['forensic_results']
             )
             print("✅ Report generation complete")
             print(f"Report saved to: {report_path}")
