@@ -56,8 +56,9 @@ def download_deepfake_model():
 
 def main():
     """Set up all required models"""
-    # Create models directory if it doesn't exist
+    # Create required directories if they don't exist
     PathLib("models").mkdir(exist_ok=True)
+    PathLib("logs").mkdir(exist_ok=True)
     
     try:
         # 1. Download face detection model
