@@ -7,6 +7,11 @@ from typing import Optional, Dict, Any
 import logging
 import json
 from datetime import datetime
+from pathlib import Path
+
+# Create logs directory
+LOGS_DIR = Path(__file__).parent.parent / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
 
 class BaseMessage(Model):
     """Base message model for agent communication"""
@@ -66,7 +71,7 @@ class BaseAgent:
         
         # Create handlers
         c_handler = logging.StreamHandler()
-        f_handler = logging.FileHandler(f"logs/{self.agent.name}.log")
+        f_handler = logging.FileHandler(str(LOGS_DIR / f"{self.agent.name}.log"))
         
         # Create formatters
         formatter = logging.Formatter(
