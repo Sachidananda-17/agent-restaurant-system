@@ -59,7 +59,8 @@ class BaseAgent:
         self.agent = Agent(
             name=name,
             seed=seed,
-            port=port
+            port=port,
+            endpoint=f"http://127.0.0.1:{port}"  # Local endpoint for development
         )
         self.logger = self._setup_logger()
         self._register_handlers()
