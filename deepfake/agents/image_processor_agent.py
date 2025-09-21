@@ -152,7 +152,7 @@ class ImageProcessorAgent(BaseAgent):
                     raise FileNotFoundError(f"Image not found: {image_path}")
                 
                 # Perform analysis
-                result = await self._analyze_image(image_path)
+                result = self._analyze_image(image_path)
                 
                 # Calculate processing time
                 processing_time = time.time() - start_time
@@ -176,7 +176,7 @@ class ImageProcessorAgent(BaseAgent):
             except Exception as e:
                 await self.handle_error(ctx, msg.task_id, e)
 
-    async def _analyze_image(self, image_path: Path) -> Dict[str, Any]:
+    def _analyze_image(self, image_path: Path) -> Dict[str, Any]:
         """Perform comprehensive image analysis"""
         # Load and preprocess image
         image = Image.open(image_path).convert('RGB')
