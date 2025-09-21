@@ -1,194 +1,144 @@
-# Deepfake Detection System
+# Automated Deepfake Detection System
 
-A multi-agent system for detecting deepfake images using advanced AI and forensic analysis.
+A multi-agent system for detecting and analyzing potential deepfake images using deep learning and forensic analysis.
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+- Python 3.11 (recommended) or later
+- Git
+- macOS, Linux, or Windows
+
+### One-Step Setup
+
 ```bash
-# 1. Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate
+# Clone the repository
+git clone https://github.com/yourusername/agent-restaurant-system.git
+cd agent-restaurant-system/deepfake
 
-# 2. Install core dependencies
-pip install setuptools wheel
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# Make setup script executable
+chmod +x setup.sh
 
-# 3. Install project dependencies
-pip install -r requirements.txt
-
-# 4. Start the web application
-cd web_app
-python app.py
+# Run setup script
+./setup.sh
 ```
 
-Then open http://localhost:5000 in your browser.
+### Manual Setup (if the setup script doesn't work)
 
-## 🛠️ System Requirements
+1. Create and activate virtual environment:
+   ```bash
+   python3.11 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-- Python 3.8 or higher
-- 8GB RAM (minimum)
-- 2GB free disk space
-- Modern web browser (Chrome, Firefox, Safari)
+2. Install PyTorch and dependencies:
+   ```bash
+   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+   pip install numpy==1.24.3
+   pip install -e .
+   ```
 
-## 🤖 System Architecture
+3. Create necessary directories:
+   ```bash
+   mkdir -p models uploads outputs reports logs
+   ```
 
-### Agents
+4. Download and initialize models:
+   ```bash
+   python download_models.py
+   ```
 
-1. **Coordinator Agent** (Port 8000)
-   - Manages workflow
-   - Coordinates between agents
-   - Handles task distribution
+### Running the System
 
-2. **Image Processor Agent** (Port 8001)
-   - Deep learning-based detection
-   - Face detection
-   - Heatmap generation
-   - Confidence scoring
+1. Activate virtual environment (if not already activated):
+   ```bash
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-3. **Forensic Analyzer Agent** (Port 8002)
-   - Metadata analysis
-   - Error Level Analysis (ELA)
-   - Compression artifact analysis
-   - Noise pattern analysis
+2. Start the web application:
+   ```bash
+   cd web_app
+   python app.py
+   ```
 
-4. **Report Generator Agent** (Port 8003)
-   - PDF report generation
-   - Visual evidence compilation
-   - Findings summarization
-
-### Web Interface
-
-- Real-time progress monitoring
-- WebSocket-based updates
-- Drag-and-drop file upload
-- Interactive results display
+3. Open your browser and go to:
+   - http://localhost:5000 (or http://localhost:5001 if port 5000 is in use)
 
 ## 📁 Project Structure
 
 ```
-deepfake-detection-system/
-├── agents/                  # Agent implementations
-│   ├── base_agent.py
-│   ├── coordinator_agent.py
-│   ├── image_processor_agent.py
-│   ├── forensic_analyzer_agent.py
-│   └── report_generator_agent.py
-├── web_app/                 # Web interface
-│   ├── app.py
-│   └── templates/
-│       └── index.html
-├── models/                  # Model storage
-├── uploads/                # Uploaded images
-├── reports/                # Generated reports
-└── config.py              # System configuration
+deepfake/
+├── agents/                 # Multi-agent system components
+│   ├── base_agent.py      # Base agent class
+│   ├── coordinator_agent.py    # Orchestrates analysis workflow
+│   ├── image_processor_agent.py    # Handles deepfake detection
+│   ├── forensic_analyzer_agent.py  # Performs forensic analysis
+│   └── report_generator_agent.py   # Generates analysis reports
+├── web_app/               # Web interface
+│   ├── app.py            # Flask application
+│   ├── templates/        # HTML templates
+│   └── static/           # CSS, JS, and other static files
+├── models/               # AI models and weights
+├── uploads/              # Temporary storage for uploaded images
+├── outputs/              # Analysis outputs and visualizations
+├── reports/              # Generated PDF reports
+├── logs/                 # System logs
+├── setup.py             # Package configuration
+├── setup.sh             # Automated setup script
+└── download_models.py    # Model download and initialization
 ```
 
-## 🔍 Usage
+## 🔍 System Components
 
-1. **Upload Image**
-   - Drag and drop or click to select
-   - Supported formats: JPG, PNG, BMP
-   - Max file size: 10MB
+1. **Web Interface**
+   - Upload images for analysis
+   - Real-time progress tracking
+   - Download detailed PDF reports
 
-2. **Analysis Process**
-   - Image processing (deepfake detection)
-   - Forensic analysis
-   - Report generation
+2. **Agent System**
+   - Coordinator Agent (Port 8000)
+   - Image Processor Agent (Port 8001)
+   - Forensic Analyzer Agent (Port 8002)
+   - Report Generator Agent (Port 8003)
 
-3. **View Results**
-   - Real-time progress updates
-   - Confidence scores
-   - Forensic findings
-   - Download detailed PDF report
+3. **Analysis Features**
+   - Deep learning-based deepfake detection
+   - Face detection and analysis
+   - Error Level Analysis (ELA)
+   - Metadata analysis
+   - Compression pattern analysis
+   - Noise pattern analysis
+
+## 📊 Analysis Report
+
+The system generates comprehensive PDF reports including:
+- Executive Summary
+- Technical Analysis
+- Forensic Analysis
+- Visual Analysis with heatmaps
+- Metadata Analysis
+- Recommendations
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+1. **Port in Use**
+   - The system will automatically try the next available port
+   - Default: 5000, Fallback: 5001
 
-1. **Port Conflicts**
-   ```bash
-   # Change ports in config.py if needed
-   WEB_CONFIG = {
-       "port": 5000  # Change to available port
-   }
-   ```
+2. **Model Download Issues**
+   - Check internet connection
+   - Ensure enough disk space
+   - Try running `python download_models.py` manually
 
-2. **Memory Issues**
-   - Close other applications
-   - Reduce image size if needed
-   - Ensure sufficient free RAM
+3. **Import Errors**
+   - Ensure you're in the virtual environment
+   - Try reinstalling dependencies: `pip install -e .`
 
-3. **Model Loading Issues**
-   ```bash
-   # Verify model directory exists
-   mkdir -p models
-   ```
-
-### Error Messages
-
-- "Port already in use": Change port in config.py
-- "Memory error": Free up system memory
-- "Model not found": Check models directory
-
-## 📊 Example Output
-
-The system generates:
-1. Deepfake confidence score (0-100%)
-2. Highlighted suspicious areas
-3. Forensic analysis report
-4. Detailed PDF documentation
-
-## 🔒 Security Notes
-
-- All processing is done locally
-- No data sent to external servers
-- Reports stored locally in reports/
-- Uploaded images stored in uploads/
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
+4. **Memory Issues**
+   - Reduce image size before upload
+   - Close other memory-intensive applications
 
 ## 📝 License
 
-MIT License - feel free to use and modify
-
-## 🆘 Support
-
-For issues and questions:
-1. Check troubleshooting guide
-2. Review error logs
-3. Create GitHub issue
-
-## 🔄 Updates
-
-To update the system:
-```bash
-git pull
-pip install -r requirements.txt
-```
-
-## 🏃‍♂️ Running in Production
-
-For production deployment:
-1. Use a production WSGI server (e.g., Gunicorn)
-2. Set up proper security measures
-3. Configure logging
-4. Use environment variables for sensitive data
-
-## 🧪 Testing
-
-```bash
-# Run tests
-python -m pytest tests/
-```
-
-## 📈 Performance
-
-- Average processing time: 5-10 seconds
-- Memory usage: 2-4GB RAM
-- CPU usage: 60-80% during analysis
+This project is licensed under the MIT License - see the LICENSE file for details.
